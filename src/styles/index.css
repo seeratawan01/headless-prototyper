@@ -1,0 +1,11 @@
+.headless-canvas {
+  border: 1px solid #ccc;
+  background-color: #eee;
+  display: inline-block;
+  position: relative;
+}
+
+.panel-shape-box {
+  cursor: move;
+  display: inline-block;
+}
