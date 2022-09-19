@@ -2,9 +2,16 @@
 // import "core-js/fn/array.find"
 // ...
 
-import { isShape, bindEventToSVGElement, unbindEventToSVGElement, containSvg } from './utils'
+import {
+  isShape,
+  bindEventToSVGElement,
+  unbindEventToSVGElement,
+  containSvg,
+  createShape
+} from './utils'
 import Shape from './shapes/Shape'
 import ShapesPanel from './panels/ShapesPanel'
+import Rectangle from './shapes/Rectangle'
 
 export interface ICanvas {
   width: number;
@@ -31,11 +38,11 @@ export default class HeadlessCanvas {
     this.height = height
     this.element = element
     this.svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    this.svgContainer = containSvg(this.svgLayer,{
+    this.svgContainer = containSvg(this.svgLayer, {
       class: 'headless-canvas',
       style: {
         width: `${this.width}px`,
-        height: `${this.height}px`,
+        height: `${this.height}px`
       }
     })
   }
@@ -78,30 +85,41 @@ export default class HeadlessCanvas {
 
     bindEventToSVGElement(this.svgContainer, 'dragenter', (e: any) => {
       e.preventDefault()
-      this.mouseX = e.clientX
-      this.mouseY = e.clientY
     })
     bindEventToSVGElement(this.svgContainer, 'dragover', (e: any) => {
       e.preventDefault()
+      this.setMousePosition(e)
     })
     bindEventToSVGElement(this.svgContainer, 'drop', (e: any) => {
-      e.preventDefault();
-      console.log("drop")
+      e.preventDefault()
+      console.log('drop', this.mouseX, this.mouseY)
       // on drop add shape to svg canvas on mouse position
       const type = e.dataTransfer.getData('text/plain')
+      const xCenterPoint = (this.mouseX - this.svgContainer.offsetLeft)
+      const yCenterPoint = (this.mouseY - this.svgContainer.offsetTop)
 
-        const shape = new Shape({
+      console.log('type', type)
+
+      const shape = createShape(type, {
           id: `shape-${Math.random()}`,
-          type:type,
-          x: this.mouseX,
-          y: this.mouseY,
+          type: type,
+          x: xCenterPoint - 50,
+          y: yCenterPoint - 50,
           width: 100,
           height: 100,
           fill: 'transparent',
           stroke: 'black',
-          strokeWidth: 1
-        })
+          strokeWidth: 1,
+          cx: xCenterPoint,
+          cy: yCenterPoint,
+          r: 50,
+        }
+      )
+
+      if (shape && isShape(shape.getShape())) {
         this.svgLayer.appendChild(shape.getShape())
+      }
+
     })
 
   }
@@ -159,5 +177,13 @@ export default class HeadlessCanvas {
     if (target && isShape(target)) {
       target.setAttribute('data-mousedown', 'false')
     }
+  }
+
+  /**
+   * Method to set mouse position with respect to svg container
+   */
+  private setMousePosition(e: MouseEvent) {
+    this.mouseX = e.clientX
+    this.mouseY = e.clientY
   }
 }
