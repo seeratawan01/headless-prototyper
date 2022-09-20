@@ -175,13 +175,15 @@ export default class HeadlessCanvas {
           y: cursor.y - dragOffset.y,
         }
 
-        if (target.getAttribute('data-type') === 'rect') {
 
-          target.setAttribute('x', rect.x.toString())
-          target.setAttribute('y', rect.y.toString())
+        if (target.getAttribute('data-type') === 'rect') {
+          let snap = this.snapToGrid(rect.x, rect.y)
+          target.setAttribute('x', snap.x.toString())
+          target.setAttribute('y', snap.y.toString())
         } else if (target.getAttribute('data-type') === 'circle') {
-          target.setAttribute('cx', cursor.x.toString())
-          target.setAttribute('cy', cursor.y.toString())
+          let snap = this.snapToGrid(cursor.x, cursor.y)
+          target.setAttribute('cx', snap.x.toString())
+          target.setAttribute('cy', snap.y.toString())
         }
       };
 
@@ -233,5 +235,15 @@ export default class HeadlessCanvas {
   private setMousePosition(e: MouseEvent) {
     this.mouseX = e.clientX
     this.mouseY = e.clientY
+  }
+
+  /**
+   * Method to calculate the snap to grid position by 10px
+   */
+  private snapToGrid(x: number, y: number) {
+    return {
+      x: Math.round(x / 10) * 10,
+      y: Math.round(y / 10) * 10,
+    }
   }
 }
