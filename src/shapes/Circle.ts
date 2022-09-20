@@ -50,7 +50,8 @@ export default class Circle extends Shape {
       r: this.r,
       fill: this.fill,
       stroke: this.stroke,
-      'stroke-width': this.strokeWidth
+      'stroke-width': this.strokeWidth,
+      'data-type': this.type
     })
     return shape
   }

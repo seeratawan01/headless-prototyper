@@ -53,7 +53,8 @@ export default class Shape {
       height: this.height,
       fill: this.fill,
       stroke: this.stroke,
-      'stroke-width': this.strokeWidth
+      'stroke-width': this.strokeWidth,
+      'data-type': this.type
     })
     return shape
   }

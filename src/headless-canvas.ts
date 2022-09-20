@@ -23,7 +23,7 @@ export default class HeadlessCanvas {
   private readonly width: number
   private readonly height: number
   private element: HTMLElement
-  private svgLayer: SVGElement
+  private svgLayer: SVGElement | SVGSVGElement
   private svgContainer: HTMLElement
   private mouseX: number = 0
   private mouseY: number = 0
@@ -92,13 +92,10 @@ export default class HeadlessCanvas {
     })
     bindEventToSVGElement(this.svgContainer, 'drop', (e: any) => {
       e.preventDefault()
-      console.log('drop', this.mouseX, this.mouseY)
       // on drop add shape to svg canvas on mouse position
       const type = e.dataTransfer.getData('text/plain')
       const xCenterPoint = (this.mouseX - this.svgContainer.offsetLeft)
       const yCenterPoint = (this.mouseY - this.svgContainer.offsetTop)
-
-      console.log('type', type)
 
       const shape = createShape(type, {
           id: `shape-${Math.random()}`,
@@ -146,27 +143,78 @@ export default class HeadlessCanvas {
   /**
    * On mouse down event on existing shapes
    */
-  private onMouseDown = (e: MouseEvent) => {
+  private onMouseDown = (e: any) => {
     const target = e.target as SVGElement
     if (target && isShape(target)) {
+
       target.setAttribute('data-mousedown', 'true')
+      e.preventDefault();
+      let svg = (this.svgLayer as SVGSVGElement)
+
+      let point = svg.createSVGPoint();
+      point.x = e.clientX;
+      point.y = e.clientY;
+      // @ts-ignore
+      point = point.matrixTransform(svg.getScreenCTM().inverse());
+
+      let dragOffset = {
+        // @ts-ignore
+        x: point.x - parseFloat(target.getAttribute('x')),
+        // @ts-ignore
+        y: point.y - parseFloat(target.getAttribute('y'))
+      }
+
+      const mousemove = (event: any) => {
+        event.preventDefault();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        // @ts-ignore
+        let cursor = point.matrixTransform(svg.getScreenCTM().inverse());
+        let rect = {
+          x: cursor.x - dragOffset.x,
+          y: cursor.y - dragOffset.y,
+        }
+
+        if (target.getAttribute('data-type') === 'rect') {
+
+          target.setAttribute('x', rect.x.toString())
+          target.setAttribute('y', rect.y.toString())
+        } else if (target.getAttribute('data-type') === 'circle') {
+          target.setAttribute('cx', cursor.x.toString())
+          target.setAttribute('cy', cursor.y.toString())
+        }
+      };
+
+      const mouseup = (event: any) => {
+        document.removeEventListener("mousemove", mousemove);
+        document.removeEventListener("mouseup", mouseup);
+      };
+
+      document.addEventListener("mousemove", mousemove);
+      document.addEventListener("mouseup", mouseup);
     }
+
+
+    // this.setState({dragOffset: {
+    //     x: point.x - this.state.rect.x,
+    //     y: point.y - this.state.rect.y
+    //   }});
   }
 
   /**
    * On mouse move event
    */
   private onMouseMove = (e: MouseEvent) => {
-    this.mouseX = e.clientX
-    this.mouseY = e.clientY
-
-    const target = e.target as SVGElement
-    if (target && isShape(target) && target.getAttribute('data-mousedown') === 'true') {
-      const x = e.offsetX
-      const y = e.offsetY
-      target.setAttribute('x', x.toString())
-      target.setAttribute('y', y.toString())
-    }
+//     this.setMousePosition(e)
+// // https://codesandbox.io/s/blov5kowy?file=/index.js:1565-1574
+//
+//     const target = e.target as SVGElement
+//     if (target && isShape(target) && target.getAttribute('data-mousedown') === 'true') {
+//       const x = e.offsetX
+//       const y = e.offsetY
+//       target.setAttribute('x', x.toString())
+//       target.setAttribute('y', y.toString())
+//     }
   }
 
   /**
